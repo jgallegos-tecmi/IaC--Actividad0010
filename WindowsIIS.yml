@@ -1,0 +1,64 @@
+---
+- name: Configurar IIS en Windows
+  hosts: Windows
+  become: yes
+  tasks:
+
+    - name: Instalar el rol de IIS
+      win_feature:
+        name: Web-Server
+        state: present
+
+    - name: Instalar componentes adicionales de IIS (si son necesarios)
+      win_feature:
+        name:
+          - Web-Common-Http
+          - Web-Default-Doc
+          - Web-Dir-Browsing
+          - Web-Http-Errors
+          - Web-Static-Content
+          - Web-Http-Redirect
+          - Web-Health
+          - Web-Http-Logging
+          - Web-Performance
+          - Web-Stat-Compression
+        state: present
+
+    - name: Asegurarse de que el servicio de IIS esté iniciado
+      win_service:
+        name: W3SVC
+        start_mode: auto
+        state: started
+
+    - name: Asegurarse de que el puerto 80 esté permitido en el firewall
+      win_firewall_rule:
+        name: "Abrir puerto 80 para HTTP"
+        enable: yes
+        localport: 80
+        action: allow
+        direction: in
+        protocol: TCP
+
+    - name: Establecer permisos adecuados en el directorio de IIS
+      win_acl:
+        path: 'C:\inetpub\wwwroot'
+        user: 'IIS_IUSRS'
+        rights: 'FullControl'
+        type: 'allow'
+
+    - name: Crear el archivo HTML para la página web
+      win_copy:
+        content: |
+          <html>
+          <head><title>Página IIS de Deportes</title></head>
+          <body>
+            <h1>Bienvenido a la página de información deportiva!</h1>
+            <p>Últimos resultados deportivos: <br>
+            - Fútbol: Equipo A 2 - 1 Equipo B <br>
+            - Baloncesto: Equipo C 98 - 95 Equipo D </p>
+          </body>
+          </html>
+        dest: C:\inetpub\wwwroot\index.html
+
+    - name: Reiniciar IIS para aplicar todos los cambios
+      win_shell: iisreset

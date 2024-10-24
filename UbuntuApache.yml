@@ -1,0 +1,55 @@
+- hosts: Ubuntu
+  become: yes
+  tasks:
+
+    # Actualizar el caché de los repositorios apt
+    - name: Update apt repo and cache
+      apt:
+        update_cache: yes
+
+    # Instalar Apache
+    - name: Install Apache
+      apt:
+        name: apache2
+        state: present
+
+    # Asegurarse de que Apache esté habilitado y corriendo
+    - name: Ensure Apache is started and enabled
+      service:
+        name: apache2
+        state: started
+        enabled: yes
+
+    # Configurar el firewall para permitir tráfico HTTP
+    - name: Allow HTTP through the firewall
+      ufw:
+        rule: allow
+        port: '80'
+        proto: tcp
+
+    # Crear una página web con información deportiva
+    - name: Deploy a sports info HTML page
+      copy:
+        content: |
+          <html>
+          <head>
+            <title>Noticias Deportivas</title>
+          </head>
+          <body>
+            <h1>Actualizaciones</h1>
+            <ul>
+              <li><strong>Football:</strong> Liga Premier.</li>
+              <li><strong>Basketball:</strong> NBA Pretemporada.</li>
+              <li><strong>Tennis:</strong> Actualizaciones Grand Slam.</li>
+            </ul>
+          </body>
+          </html>
+        dest: /var/www/html/index.html
+        owner: www-data
+        group: www-data
+        mode: '0644'
+    
+    # Asegurar que UFW esté habilitado
+    - name: Ensure UFW is enabled
+      ufw:
+        state: enabled
